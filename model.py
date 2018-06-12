@@ -7,6 +7,10 @@ import chainer.functions as F
 import chainer.links as L
 
 
+from decoder import *
+from encoder import *
+
+
 class LSTM(Chain):
     def __init__(self, vocab_size, embed_size, hidden_size, out_size):
         # クラスの初期化
@@ -14,13 +18,13 @@ class LSTM(Chain):
         # :param embed_size: 埋め込みベクトルサイズ
         # :param hidden_size: 隠れ層サイズ
         # :param out_size: 出力層サイズ
-        super(LSTM_SentenceClassifier, self).__init__(
+        super(LSTM, self).__init__(
             # encode用のLink関数
             embed = L.EmbedID(vocab_size, embed_size, ignore_label=-1),
             eh = L.LSTM(embed_size, hidden_size),
             hh = L.Linear(hidden_size, hidden_size),
             # classifierのLink関数
-            hy = L.Linear(hidden_size, n_vocab)
+            hy = L.Linear(hidden_size, out_size)
         )
 
     def __call__(self, x):

@@ -48,7 +48,7 @@ def title_ing():
     train_ing = ing
     train_title = []
     for t in title:
-        exp = m.parse(t).split(" ")
+        exp = m.parse(t).split(" ")[:-1]
         train_title.append(exp)
 
     if_title, if_ing, if_step = False, False, False
@@ -86,7 +86,8 @@ def title_ing():
     test_ing = ing
     test_title = []
     for t in title:
-        exp = m.parse(t).split(" ")
+        #\nの除去
+        exp = m.parse(t).split(" ")[:-1]
         test_title.append(exp)
 
     return train_title, train_ing, test_title, test_ing
