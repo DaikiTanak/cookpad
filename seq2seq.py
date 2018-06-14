@@ -14,7 +14,9 @@ import chainer.functions as F
 import chainer.links as L
 from chainer import training
 from chainer.training import extensions
+from chainer.training.triggers import MinValueTrigger
 
+from chainer import serializers
 
 UNK = 0
 EOS = 1
@@ -43,6 +45,7 @@ class Seq2seq(chainer.Chain):
         self.n_units = n_units
 
     def __call__(self, xs, ys):
+
         xs = [x[::-1] for x in xs]
 
         eos = self.xp.array([EOS], numpy.int32)
@@ -72,6 +75,7 @@ class Seq2seq(chainer.Chain):
         return loss
 
     def translate(self, xs, max_length=100):
+        #xs : [  31   32  220  329   54  329   53  329   24  144  169  399  720  169 1003   80   81   12  298  280  352  294]
         batch = len(xs)
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             xs = [x[::-1] for x in xs]
@@ -148,6 +152,7 @@ class CalculateBleu(chainer.training.Extension):
                     chainer.dataset.to_device(self.device, x) for x in sources]
                 ys = [y.tolist()
                       for y in self.model.translate(sources, self.max_length)]
+
                 hypotheses.extend(ys)
 
         bleu = bleu_score.corpus_bleu(
@@ -311,6 +316,8 @@ def main():
 
     # Setup model
     model = Seq2seq(args.layer, len(source_ids), len(target_ids), args.unit)
+    print("Parameter of Seq2Seq")
+    print(args.layer, len(source_ids), len(target_ids), args.unit)
     if args.gpu >= 0:
         chainer.backends.cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
@@ -328,11 +335,22 @@ def main():
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
     trainer.extend(extensions.LogReport(
         trigger=(args.log_interval, 'iteration')))
+    trainer.extend(extensions.ProgressBar(update_interval=1))
     trainer.extend(extensions.PrintReport(
         ['epoch', 'iteration', 'main/loss', 'validation/main/loss',
          'main/perp', 'validation/main/perp', 'validation/main/bleu',
          'elapsed_time']),
         trigger=(args.log_interval, 'iteration'))
+
+
+    #save the best model
+
+    def save_best_model(t):
+        print("saving model..")
+        serializers.save_npz("LSTM2.model", model)
+    trainer.extend(save_best_model,
+                    trigger=MinValueTrigger('validation/main/bleu',
+                    trigger=(args.validation_interval, 'iteration')))
 
     if args.validation_source and args.validation_target:
         test_source = load_data(source_ids, args.validation_source)
@@ -354,14 +372,26 @@ def main():
         @chainer.training.make_extension()
         def translate(trainer):
             source, target = test_data[numpy.random.choice(len(test_data))]
+
             result = model.translate([model.xp.array(source)])[0]
 
             source_sentence = ' '.join([source_words[x] for x in source])
             target_sentence = ' '.join([target_words[y] for y in target])
             result_sentence = ' '.join([target_words[y] for y in result])
-            print('# source : ' + source_sentence)
-            print('# result : ' + result_sentence)
-            print('# expect : ' + target_sentence)
+            #print('# source : ' + source_sentence)
+            #print('# result : ' + result_sentence)
+            #print('# expect : ' + target_sentence)
+            s = '# source : ' + source_sentence + "\n"
+            r = '# result : ' + result_sentence + "\n"
+            e = '# expect : ' + target_sentence + "\n"
+            f = open('result.txt', 'a')
+            now_epoch = train_iter.epoch
+            epoch_message = str(now_epoch) + ":\n"
+            f.write(epoch_message)
+            f.write(s)
+            f.write(r)
+            f.write(e)
+            f.close()
 
         trainer.extend(
             translate, trigger=(args.validation_interval, 'iteration'))
@@ -369,6 +399,9 @@ def main():
             CalculateBleu(
                 model, test_data, 'validation/main/bleu', device=args.gpu),
             trigger=(args.validation_interval, 'iteration'))
+
+
+
 
     print('start training')
     trainer.run()

@@ -45,11 +45,28 @@ def title_ing():
 
         this_index += 1
     print("training dataset done.")
-    train_ing = ing
+    #train_ing = ing
     train_title = []
+    train_ing = []
+    train_step = []
+    for ing_list in ing:
+        recipe_ing = []
+        for i in ing_list:
+            exp = m.parse(i).split(" ")[:-1]
+            #print(exp)
+            recipe_ing.extend(exp)
+        train_ing.append(recipe_ing)
     for t in title:
         exp = m.parse(t).split(" ")[:-1]
         train_title.append(exp)
+
+    for s_list in step:
+        recipe_step = []
+        for s in s_list:
+            exp = m.parse(s).split(" ")[:-1]
+            recipe_step.extend(exp)
+        train_step.append(recipe_step)
+
 
     if_title, if_ing, if_step = False, False, False
     title, ing, step = [], [], []
@@ -83,11 +100,39 @@ def title_ing():
 
         this_index += 1
     print("test dataset done.")
-    test_ing = ing
+    #test_ing = ing
     test_title = []
+    test_ing = []
+    test_step = []
+
+
+
+    for ing_list in ing:
+        recipe_ing = []
+        for i in ing_list:
+            exp = m.parse(i).split(" ")[:-1]
+            #print(exp)
+            recipe_ing.extend(exp)
+        test_ing.append(recipe_ing)
+
     for t in title:
         #\nの除去
         exp = m.parse(t).split(" ")[:-1]
         test_title.append(exp)
 
-    return train_title, train_ing, test_title, test_ing
+    for s_list in step:
+        recipe_step = []
+        for s in s_list:
+            exp = m.parse(s).split(" ")[:-1]
+            recipe_step.extend(exp)
+        test_step.append(recipe_step)
+    print(test_step[:2])
+
+    print(len(train_title))
+
+    #train_title = train_title[:8000]
+    print()
+    return train_title, train_ing, train_step, test_title, test_ing, test_step
+
+if __name__ == "__main__":
+    title_ing()
