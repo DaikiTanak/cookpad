@@ -189,29 +189,6 @@ def load_data(vocabulary, path):
             data.append(array)
     return data
 
-"""
-def load_data_using_dataset_api(
-        src_vocab, src_path, target_vocab, target_path, filter_func):
-
-    def _transform_line(vocabulary, line):
-        words = line.strip().split()
-        return numpy.array(
-            [vocabulary.get(w, UNK) for w in words], numpy.int32)
-
-    def _transform(example):
-        source, target = example
-        return (
-            _transform_line(src_vocab, source),
-            _transform_line(target_vocab, target)
-        )
-
-    return chainer.datasets.TransformDataset(
-        chainer.datasets.TextDataset(
-            [src_path, target_path],
-            encoding='utf-8',
-            filter_func=filter_func
-        ), _transform)
-"""
 
 def calculate_unknown_ratio(data):
     unknown = sum((s == UNK).sum() for s in data)
@@ -268,24 +245,7 @@ def main():
     source_ids = load_vocabulary(args.SOURCE_VOCAB)
     target_ids = load_vocabulary(args.TARGET_VOCAB)
 
-    """
-    if args.use_dataset_api:
-        # By using TextDataset, you can avoid loading whole dataset on memory.
-        # This significantly reduces the host memory usage.
-        def _filter_func(s, t):
-            sl = len(s.strip().split())  # number of words in source line
-            tl = len(t.strip().split())  # number of words in target line
-            return (
-                args.min_source_sentence <= sl <= args.max_source_sentence and
-                args.min_target_sentence <= tl <= args.max_target_sentence)
 
-        train_data = load_data_using_dataset_api(
-            source_ids, args.SOURCE,
-            target_ids, args.TARGET,
-            _filter_func,
-        )
-    else:
-    """
     # Load all records on memory.
     train_source = load_data(source_ids, args.SOURCE)
     train_target = load_data(target_ids, args.TARGET)
