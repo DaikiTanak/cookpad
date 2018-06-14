@@ -15,6 +15,7 @@ import chainer.links as L
 from chainer import training
 from chainer.training import extensions
 from chainer.training.triggers import MinValueTrigger
+from chainer.training.triggers import MaxValueTrigger
 
 from chainer import serializers
 
@@ -174,7 +175,7 @@ def load_vocabulary(path):
     word_ids['<EOS>'] = 1
     return word_ids
 
-
+# データをロードする
 def load_data(vocabulary, path):
     n_lines = count_lines(path)
     bar = progressbar.ProgressBar()
@@ -188,7 +189,7 @@ def load_data(vocabulary, path):
             data.append(array)
     return data
 
-
+"""
 def load_data_using_dataset_api(
         src_vocab, src_path, target_vocab, target_path, filter_func):
 
@@ -210,7 +211,7 @@ def load_data_using_dataset_api(
             encoding='utf-8',
             filter_func=filter_func
         ), _transform)
-
+"""
 
 def calculate_unknown_ratio(data):
     unknown = sum((s == UNK).sum() for s in data)
@@ -263,9 +264,11 @@ def main():
     # Load pre-processed dataset
     print('[{}] Loading dataset... (this may take several minutes)'.format(
         datetime.datetime.now()))
+    """ vocabraryのロード """
     source_ids = load_vocabulary(args.SOURCE_VOCAB)
     target_ids = load_vocabulary(args.TARGET_VOCAB)
 
+    """
     if args.use_dataset_api:
         # By using TextDataset, you can avoid loading whole dataset on memory.
         # This significantly reduces the host memory usage.
@@ -282,18 +285,19 @@ def main():
             _filter_func,
         )
     else:
-        # Load all records on memory.
-        train_source = load_data(source_ids, args.SOURCE)
-        train_target = load_data(target_ids, args.TARGET)
-        assert len(train_source) == len(train_target)
+    """
+    # Load all records on memory.
+    train_source = load_data(source_ids, args.SOURCE)
+    train_target = load_data(target_ids, args.TARGET)
+    assert len(train_source) == len(train_target)
 
-        train_data = [
-            (s, t)
-            for s, t in six.moves.zip(train_source, train_target)
-            if (args.min_source_sentence <= len(s) <= args.max_source_sentence
-                and
-                args.min_target_sentence <= len(t) <= args.max_target_sentence)
-        ]
+    train_data = [
+        (s, t)
+        for s, t in six.moves.zip(train_source, train_target)
+        if (args.min_source_sentence <= len(s) <= args.max_source_sentence
+            and
+            args.min_target_sentence <= len(t) <= args.max_target_sentence)
+    ]
     print('[{}] Dataset loaded.'.format(datetime.datetime.now()))
 
     if not args.use_dataset_api:
@@ -344,14 +348,14 @@ def main():
 
 
     #save the best model
-
+    """
     def save_best_model(t):
         print("saving model..")
-        serializers.save_npz("LSTM2.model", model)
+        serializers.save_npz("LSTM_ing2title.model", model)
     trainer.extend(save_best_model,
-                    trigger=MinValueTrigger('validation/main/bleu',
+                    trigger=MaxValueTrigger('validation/main/bleu',
                     trigger=(args.validation_interval, 'iteration')))
-
+    """
     if args.validation_source and args.validation_target:
         test_source = load_data(source_ids, args.validation_source)
         test_target = load_data(target_ids, args.validation_target)
@@ -384,7 +388,7 @@ def main():
             s = '# source : ' + source_sentence + "\n"
             r = '# result : ' + result_sentence + "\n"
             e = '# expect : ' + target_sentence + "\n"
-            f = open('result.txt', 'a')
+            #f = open('result_ing_to_title.txt', 'a')
             now_epoch = train_iter.epoch
             epoch_message = str(now_epoch) + ":\n"
             f.write(epoch_message)
