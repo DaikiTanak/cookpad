@@ -234,7 +234,7 @@ def main():
     parser.add_argument('--validation-interval', type=int, default=4000,
                         help='number of iteration to evlauate the model '
                         'with validation dataset')
-    parser.add_argument('--out', '-o', default='result',
+    parser.add_argument('--out', '-o', default='result3',
                         help='directory to output the result')
     args = parser.parse_args()
 
@@ -308,14 +308,14 @@ def main():
 
 
     #save the best model
-    """
+
     def save_best_model(t):
         print("saving model..")
-        serializers.save_npz("LSTM_ing2title.model", model)
+        serializers.save_npz("LSTM_step2title.model", model)
     trainer.extend(save_best_model,
                     trigger=MaxValueTrigger('validation/main/bleu',
                     trigger=(args.validation_interval, 'iteration')))
-    """
+
     if args.validation_source and args.validation_target:
         test_source = load_data(source_ids, args.validation_source)
         test_target = load_data(target_ids, args.validation_target)
@@ -348,7 +348,7 @@ def main():
             s = '# source : ' + source_sentence + "\n"
             r = '# result : ' + result_sentence + "\n"
             e = '# expect : ' + target_sentence + "\n"
-            #f = open('result_ing_to_title.txt', 'a')
+            f = open('result_step2title.txt', 'a')
             now_epoch = train_iter.epoch
             epoch_message = str(now_epoch) + ":\n"
             f.write(epoch_message)

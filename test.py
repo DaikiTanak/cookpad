@@ -20,10 +20,19 @@ from seq2seq import Seq2seq
 UNK = 0
 EOS = 1
 
-model = Seq2seq(3, 7334, 6829, 1024)
-serializers.load_npz("LSTM_ing2title.model", model)
-print("model loaded.")
+#model = Seq2seq(3, 7334, 6829, 1024)
+#model = Seq2seq(3, 5838, 6829, 1024)
+model = Seq2seq(3, 21148, 6829, 1024)
+serializers.load_npz("LSTM_step2title.model", model)
+#serializers.load_npz("LSTM_ing2title2.model", model)
 
+print("model LSTM_step2title loaded.")
+
+
+gpu = 3
+if gpu >= 0:
+    chainer.backends.cuda.get_device(gpu).use()
+    model.to_gpu(gpu)
 
 f = open('test_title.txt', 'r') # 書き込みモードで開く
 target = f.readlines() # 引数の文字列をファイルに書き込む
@@ -63,24 +72,59 @@ def load_data(vocabulary, path):
             data.append(array)
     return data
 
-def main():
-    source_ids = load_vocabulary("ing_voc.txt")
+def main(model):
+    #source_ids = load_vocabulary("ing_voc.txt")
+    source_ids = load_vocabulary("step_voc.txt")
     target_ids = load_vocabulary("title_voc.txt")
 
-    test_source = load_data(source_ids, "test_ing.txt")
+    #test_source = load_data(source_ids, "test_ing.txt")
+    test_source = load_data(source_ids, "test_step.txt")
     test_target = load_data(target_ids, "test_title.txt")
     test_data = list(six.moves.zip(test_source, test_target))
     test_data = [(s, t) for s, t in test_data if 0 < len(s) and 0 < len(t)]
 
     target_words = {i: w for w, i in target_ids.items()}
+    source_words = {i: w for w, i in source_ids.items()}
+    res = []
+    bar = progressbar.ProgressBar()
 
-    for data in test_data:
+    copus_score = 0
+    for data in bar(test_data, max_value=len(test_data)):
         ing, title = data
 
         result = model.translate([model.xp.array(ing)])[0]
-        print("result")
+        source_sentence = ' '.join([source_words[x] for x in ing])
+        target_sentence = ' '.join([target_words[y] for y in title])
         result_sentence = ' '.join([target_words[y] for y in result])
-        print(result_sentence)
+        s = '# source : ' + source_sentence + "\n"
+        r = '# result : ' + result_sentence + "\n"
+        e = '# expect : ' + target_sentence + "\n"
+        #print('# result : ' + result_sentence)
+        #print('# expect : ' + target_sentence)
+        res.append(s)
+        res.append(r)
+        res.append(e)
+
+        """ Evaluation """
+
+        score = 0
+        for true_id in title:
+            if true_id in result:
+                score += 1
+        #再現できたものの割合
+        final_score = score/len(title)
+        copus_score += final_score
+
+    f = open('pred_result_step2title.txt', 'w')
+    #f = open('pred_true2.txt', 'w')
+    f.writelines(res)
+    f.close()
+    print(copus_score)
+
+
+
+
+
 
 if __name__ == "__main__":
-    main()
+    main(model)

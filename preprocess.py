@@ -1,6 +1,15 @@
 import MeCab
 import sys
 
+import re
+
+def fil(word):
+    gomi = ["ID", "ありがとうございます"]
+    for g in gomi:
+        if(g in word):
+            return False
+    return True
+
 def title_ing():
     f = open('train.txt')
     train = f.read()  # ファイル終端まで全て読んだデータを返す
@@ -23,14 +32,31 @@ def title_ing():
             title.append(row)
             if_title = False
         elif(if_ing):
-            ing_list.append(row.split("\t")[0])
+            #材料名だけとりだす
+            name = row.split("\t")[0]
+            #ing_list.append(name)
+
+            if(("(" in name) or ("（" in name)) :
+
+
+                begin = max(name.find("("), name.find("（"))
+
+                #end = name.find(")")
+                name = name[:begin]
+
+                ing_list.append(name)
+            else:
+                ing_list.append(name)
+
             if(train_recipe[this_index + 1] == "--- Step ---"):
+                #print(ing_list)
                 ing.append(ing_list)
                 ing_list = []
                 if_ing = False
 
         elif(if_step):
-            step_list.append(row)
+            if(not (("ID" in row) and ("ID" in row))):
+                step_list.append(row)
             if(train_recipe[this_index + 1] == "--- End ---"):
                 step.append(step_list)
                 step_list = []
@@ -45,6 +71,7 @@ def title_ing():
 
         this_index += 1
     print("training dataset done.")
+
     #train_ing = ing
     train_title = []
     train_ing = []
@@ -78,14 +105,28 @@ def title_ing():
             title.append(row)
             if_title = False
         elif(if_ing):
-            ing_list.append(row.split("\t")[0])
+            name = row.split("\t")[0]
+            #ing_list.append(name)
+
+            if(("(" in name) or ("（" in name)) :
+
+                begin = max(name.find("("), name.find("（"))
+                #end = name.find(")")
+                name = name[:begin]
+                ing_list.append(name)
+
+            else:
+                ing_list.append(name)
+
+
             if(test_recipe[this_index + 1] == "--- Step ---"):
                 ing.append(ing_list)
                 ing_list = []
                 if_ing = False
 
         elif(if_step):
-            step_list.append(row)
+            if(not (("ID" in row) and ("ID" in row))):
+                step_list.append(row)
             if(test_recipe[this_index + 1] == "--- End ---"):
                 step.append(step_list)
                 step_list = []

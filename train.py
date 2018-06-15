@@ -10,6 +10,7 @@ import chainer.links as L
 
 
 train_title, train_ing, train_step, test_title, test_ing, test_step = title_ing()
+#print(train_ing[:19])
 print(len(train_title), len(train_ing))
 
 print(train_ing[2])
